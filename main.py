@@ -2,10 +2,19 @@ import os
 import sys
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
+from config import system_prompt
+from function.get_files_info import schema_get_files_info
 
 def main():
     print("Hello from toy-agent!")
     load_dotenv()
+    available_functions = types.Tool(
+        function_declarations=[
+            schema_get_files_info,
+        ]
+    )
+
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
    
@@ -18,7 +27,17 @@ def main():
 
     verbose = '--verbose' in sys.argv
 
-    response = client.models.generate_content(model='gemini-2.0-flash-001', contents=prompt)
+    # response = client.models.generate_content(model='gemini-2.0-flash-001', contents=prompt)
+    response = client.models.generate_content(
+    model='gemini-2.0-flash-001',
+    contents=prompt,
+    config=types.GenerateContentConfig(system_instruction=system_prompt, tools=[available_functions]),
+)
+    fr = response.function_calls
+    if fr is not None:
+        for f in fr:
+            print(f"Calling function: {f.name}({f.args})")
+
     print(response.text)
     if verbose:
         print(f"User prompt: {prompt}")

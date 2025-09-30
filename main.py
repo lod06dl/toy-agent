@@ -5,6 +5,9 @@ from google import genai
 from google.genai import types
 from config import system_prompt
 from function.get_files_info import schema_get_files_info
+from function.get_file_content import schema_get_file_content
+from function.run_python_file import schema_run_python_file
+from function.write_file import schema_write_file
 
 def main():
     print("Hello from toy-agent!")
@@ -12,6 +15,9 @@ def main():
     available_functions = types.Tool(
         function_declarations=[
             schema_get_files_info,
+            schema_get_file_content,
+            schema_run_python_file,
+            schema_write_file,
         ]
     )
 
@@ -25,20 +31,22 @@ def main():
         print("Error: No argument provided. Please provide a prompt as the first argument.")
         sys.exit(1)
 
-    verbose = '--verbose' in sys.argv
 
     # response = client.models.generate_content(model='gemini-2.0-flash-001', contents=prompt)
     response = client.models.generate_content(
-    model='gemini-2.0-flash-001',
-    contents=prompt,
-    config=types.GenerateContentConfig(system_instruction=system_prompt, tools=[available_functions]),
-)
+        model='gemini-2.0-flash-001',
+        contents=prompt,
+        config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt )
+    )
+
     fr = response.function_calls
     if fr is not None:
         for f in fr:
             print(f"Calling function: {f.name}({f.args})")
+    else:
+        print(response.text)
 
-    print(response.text)
+    verbose = '--verbose' in sys.argv
     if verbose:
         print(f"User prompt: {prompt}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}\nResponse tokens: {response.usage_metadata.candidates_token_count}")

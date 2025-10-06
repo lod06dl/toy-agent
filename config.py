@@ -1,5 +1,7 @@
 MAX_FILE_LENGHT = 10000
 TIMEOUT = 30
+WORKING_DIRECTORY = './calculator'
+
 system_prompt = """
 You are a helpful AI coding agent.
 
